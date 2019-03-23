@@ -20,3 +20,26 @@ class House(scrapy.Item):
     # House Properties
     lift = scrapy.Field()
     bath_num = scrapy.Field()
+    construct_date = scrapy.Field()
+    orientation = scrapy.Field()
+    energetic_certif = scrapy.Field()
+    floor = scrapy.Field()
+    room_num = scrapy.Field()
+    m2_real = scrapy.Field()
+    m2_useful = scrapy.Field()
+    condition = scrapy.Field() # Second Hand / Well Conserved ...
+    house_type = scrapy.Field()
+    heating = scrapy.Field()
+    ground_size = scrapy.Field()
+
+    # Extra House Equipment ------>  (Yes = 1 , No = 0)
+    storage_room = scrapy.Field()       # trastero
+    built_in_wardrobe = scrapy.Field()  # Armario empotrado
+    terrace = scrapy.Field()
+    balcony = scrapy.Field()
+    garden = scrapy.Field()
+    garage = scrapy.Field()
+    chimney = scrapy.Field()
+    air_conditioner = scrapy.Field()
+    reduced_mobility = scrapy.Field()
+    swimming_pool = scrapy.Field()

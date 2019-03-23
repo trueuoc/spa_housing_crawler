@@ -58,14 +58,14 @@ class BasicSpider(scrapy.Spider):
         else:
             next_page_url = response.xpath("//a[@class='icon-arrow-right-after']/@href").extract()
 
-        # -*- Visit all the houses of each page -*-
-        test_oneHouse = True  # ---> True for visiting only one house (testing)
+        # -*- Visit all the houses -*-
+        num_houses = 30          # ---> number of houses to catch ; for all -> len(houses_links)
+        num_houses = len(houses_links) if num_houses > len(houses_links) else num_houses
+
         if not next_page_url:
-            if(test_oneHouse):
-                yield response.follow(houses_links[0], headers=header_UA, callback=self.parse_features) # catch one house
-            else:
-                print(f"{len(houses_links)} houses links catched")
-                yield response.follow(houses_links, headers=header_UA, callback=self.parse_features)   # catch all houses
+            print(f"----> {len(houses_links)} houses links catched, show just {num_houses}")
+            for i in range(num_houses):
+                yield response.follow(houses_links[i], headers=header_UA, callback=self.parse_features)  # catch houses
         else:
             yield response.follow(next_page_url[0], headers=header_UA, callback=self.parse_houses)    # catch next page
 
@@ -75,17 +75,30 @@ class BasicSpider(scrapy.Spider):
     def parse_features(self, response):
         default_url = 'http://idealista.com/inmuebles'
 
-        house = House()
-        house['price'] = response.xpath("//span[@class='txt-bold']/text()").extract()[0]
-        house['loc_street'] = response.xpath("//div[@class='clearfix']/ul/li/text()").extract()[0]
-        house['loc_city'] = response.xpath("//div[@class='clearfix']/ul/li/text()").extract()[1]
-        house['loc_zone'] = response.xpath("//div[@class='clearfix']/ul/li/text()").extract()[2]
+        # Set to zero Extra House Equipments
+        house = House(
+            storage_room = 0,
+            built_in_wardrobe = 0,
+            terrace = 0,
+            balcony = 0,
+            garden = 0,
+            garage = 0,
+            chimney = 0,
+            air_conditioner = 0,
+            reduced_mobility = 0,
+            swimming_pool = 0,
+        )
+
+        house['price'] = int(response.xpath("//span[@class='txt-bold']/text()").extract()[0].replace(".", ""))
+        house['loc_street'] = response.xpath("//div[@class='clearfix']/ul/li/text()").extract()[0].strip()
+        house['loc_city'] = response.xpath("//div[@class='clearfix']/ul/li/text()").extract()[1].strip()
+        house['loc_zone'] = response.xpath("//div[@class='clearfix']/ul/li/text()").extract()[2].strip()
         properties = response.xpath("//*[@class='details-property_features']/ul/li/text()").extract()
 
         house = get_all_properties(house, properties)
 
         # -*- Print Extracted properties (Raw Text) -*-
-        print_properties = True    # --> True for printing extracted properties (testing)
+        print_properties = False    # --> True for printing extracted properties (testing)
         if print_properties:
             print("----  PROPERTIES -----")
             i = 0
@@ -95,7 +108,7 @@ class BasicSpider(scrapy.Spider):
             print("-----------------------")
 
         # -*- Print Extracted features (Items) -*-
-        print_features = True       # --> True for printing extracted features (testing)
+        print_features = False       # --> True for printing extracted features (testing)
         if print_features:
             print("----  ITEM FEATURES -----")
             print(house.values())
@@ -103,23 +116,115 @@ class BasicSpider(scrapy.Spider):
 
     # ----------------------------------------------------------- #
 
+
 ## ---- *   FUNCTIONS TO EXTRACT FEATURES FROM PROPERTIES  * ----
 
 def get_all_properties(house, properties):
     for prop in properties:
-        prop = prop.lower()
+        prop = prop.lower().strip()
 
         # *-* lift *-*
-        match_lift = match_property(prop, ['ascensor'])
-        if match_lift:
-            house['lift'] = check_property(prop, ['sin','con'])   # 0: no lift ; 1: with lift
+        if match_property(prop, ['ascensor']):
+            house['lift'] = check_property(prop, ['con'])   # 0: no lift ; 1: with lift
 
-        # *-* baths *-*
-        match_bath = match_property(prop, ['baño'])
-        if match_bath:
+        # *-* bath number *-*
+        elif match_property(prop, ['baño']):
             house['bath_num'] = get_number(prop)
 
+        # *-* construction date *-*
+        elif match_property(prop, ['construido en']):
+            house['construct_date'] = get_number(prop)
+
+        # *-* storage room *-*
+        elif match_property(prop, ['trastero']):
+            house['storage_room'] = 1           # 0: no storage room ; 1: with storage room
+
+        # *-* orientation of the house *-*
+        elif match_property(prop, ['orientación']):
+            house['orientation'] = prop.split(' ',maxsplit=1)[1].strip()
+
+        # *-* energetic certification of the house *-*
+        elif match_property(prop, ['certific']):
+            house['energetic_certif'] = prop.split(':')[1].strip()
+
+        # *-* flat floor *-*
+        elif match_property(prop, ['bajo','planta']):
+            house['floor'] = prop
+
+        # *-* room number *-*
+        elif match_property(prop, ['habitaci']):
+            house['room_num'] = get_number(prop)
+
+        # *-* m2 of the house *-*
+        elif match_property(prop, ['m²']):
+            house['m2_real'] = get_number(prop.split(',')[0])
+
+            try:
+                house['m2_useful'] = get_number(prop.split(',')[1])
+            except:
+                pass
+
+        # *-* condition of the house *-*
+        elif match_property(prop, ['segunda mano']):
+            house['condition'] = prop
+
+        # *-* built in wardrobe *-*
+        elif match_property(prop, ['armarios empotrados']):
+            house['built_in_wardrobe'] = 1
+
+        # *-* terrace *-*f
+        elif match_property(prop, ['terraza']):
+            house['terrace'] = 1
+
+        # *-* balcony *-*
+        elif match_property(prop, ['balcón']):
+            house['balcony'] = 1
+
+        # *-* garden *-*
+        elif match_property(prop, ['jardín']):
+            house['garden'] = 1
+
+        # *-* garage *-*
+        elif match_property(prop, ['garaje']):
+            house['garage'] = 1
+
+        # *-* house type *-*
+        elif match_property(prop, ['chalet', 'finca', 'casa']):
+            house['house_type'] = prop
+
+        # *-* heating *-*
+        elif match_property(prop, ['calefacción']):
+            house['heating'] = prop
+
+        # *-* chimney *-*
+        elif match_property(prop, ['chimenea']):
+            house['chimney'] = prop
+
+        # *-* ground_size *-*
+        elif match_property(prop, ['parcela']):
+            house['ground_size'] = get_number(prop)
+
+        # *-* air_conditioner *-*
+        elif match_property(prop, ['aire acondicionado']):
+            house['air_conditioner'] = 1
+
+        # *-* reduced_mobility *-*
+        elif match_property(prop, ['movilidad reducida']):
+            house['reduced_mobility'] = 1
+
+        # *-* swimming_pool *-*
+        elif match_property(prop, ['piscina']):
+            house['swimming_pool'] = 1
+
+        else:
+            print("--  --  --  --  --  ")
+            print(f"property not included yet: {prop}")
+            print("--  --  --  --  --  ")
+
     return house
+
+    # ----------------------------------------------------------- #
+
 
 def match_property(property, patterns):
     for pat in patterns:
@@ -129,15 +234,16 @@ def match_property(property, patterns):
     return False
 
 def check_property(property, patterns):
-    i=0
     for pat in patterns:
         check = re.search(pat, property)
         if(check):
-            return i
-        i=+1
-
-    print(f"-- no pattern found checking {property} property--")
-    return -1
+            return 1
+    return 0
 
 def get_number(property):
-    return (re.findall(r'\d+', property)[0])
+    nums = re.findall(r'\d+', property)
+
+    if len(nums)==2:
+        return(int(nums[0]+nums[1]))            # '40.000' ->   '40' + '000'  -> '40000'  ->  40000
+    else:
+        return int(nums[0])
