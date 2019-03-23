@@ -7,9 +7,16 @@
 
 import scrapy
 
+class House(scrapy.Item):
 
-class SpaHousingCrawlerItem(scrapy.Item):
-    # define the fields for your item here like:
-    date = scrapy.Field()
-    link = scrapy.Field()
+    # Location Features
+    loc_street = scrapy.Field()
+    loc_city = scrapy.Field()
+    loc_zone = scrapy.Field()
+
+    # Price
     price = scrapy.Field()
+
+    # House Properties
+    lift = scrapy.Field()
+    bath_num = scrapy.Field()
