@@ -12,10 +12,11 @@ Web Crawler for scraping spanish housing prices from **_idealista.com_**
 
 <br />
 
-Note: if doesn't work, try changing the User-Agent:
+Note: if doesn't work...
 
-- Check your User Agent (*Chrome's Dev Tool can be helpfull*)
-- Paste it into _settings.py_ file
+- Try changing the User-Agent:
+    - Check your User Agent (*Chrome's Dev Tool can be helpfull*)
+    - Paste it into _settings.py_ file
 
 <br />
 

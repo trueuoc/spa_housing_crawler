@@ -2,6 +2,7 @@
 import scrapy
 import re, csv
 from datetime import datetime as dt
+import time
 
 # -*-   import modules -*-
 import sys, os
@@ -52,9 +53,9 @@ class BasicSpider(scrapy.Spider):
                     print(f"{index}.zone: {zones_links[index]}")
                 print("-----------------------")
 
-            # [17] -> for testing, take only Ceuta
-            # [52] -> take Bizkaia
-            yield response.follow(zones_links[17], headers=header_UA, callback=self.parse_houses)
+            # [17] -> for testing, take only Ceuta:  zones_links[52]
+            # [52] -> Bizkaia
+            yield response.follow(zones_links[52], headers=header_UA, callback=self.parse_houses)
 
 
     # ----------------------------------------------------------- #
@@ -68,7 +69,7 @@ class BasicSpider(scrapy.Spider):
                                          .extract().pop())) for link in info_flats_xpath])
 
         # -*- Visit all the pages -*-
-        test_onePage = True  # ---> True for visiting only one page (testing)
+        test_onePage = False  # ---> True for visiting only one page (testing)
         if test_onePage:
             next_page_url = None
         else:
@@ -82,8 +83,8 @@ class BasicSpider(scrapy.Spider):
             print(f"----> {len(houses_links)} houses links catched, show just {num_houses}")
             for i in range(num_houses):
                 yield response.follow(houses_links[i], headers=header_UA, callback=self.parse_features)  # catch houses
-
         else:
+            time.sleep(1)
             yield response.follow(next_page_url[0], headers=header_UA, callback=self.parse_houses)    # catch next page
 
     # ----------------------------------------------------------- #
@@ -92,7 +93,6 @@ class BasicSpider(scrapy.Spider):
     def parse_features(self, response):
         default_url = 'http://idealista.com/inmuebles'
 
-        print(id)
         # Set to zero Extra House Equipments
         house = House(
             storage_room = 0,
@@ -114,22 +114,19 @@ class BasicSpider(scrapy.Spider):
         except:
             pass
 
-        # -*- ad last update -*-
-        ad_last_update = (response.xpath("//div[@class='ide-box-detail overlay-box mb-jumbo']/p/text()")
-            .extract()[0][23:])
-        house['ad_last_update'] = dt.strptime(ad_last_update, '%d de %B').date()
-
-        if dt.now().month < house['ad_last_update'].month:
-            house['ad_last_update'] = house['ad_last_update'].replace(year = dt.now().year-1)
-        else:
-            house['ad_last_update'] = house['ad_last_update'].replace(year=dt.now().year)
+        # -*- metadata -*-
+        house['ad_last_update'] = (response.xpath("//div[@class='ide-box-detail overlay-box mb-jumbo']/p/text()")
+            .extract()[0])
+        house['obtention_date'] = dt.now().date()
 
         # -*- some features -*-
-        house['obtention_date'] = dt.now().date()
-        house['house_id'] = get_number(response.xpath("//ul[@class='lang-selector--lang-options']/li/a/@href").extract()[0])
         house['loc_street'] = response.xpath("//div[@class='clearfix']/ul/li/text()").extract()[0].strip()
         house['loc_city'] = response.xpath("//div[@class='clearfix']/ul/li/text()").extract()[1].strip()
         house['loc_zone'] = response.xpath("//div[@class='clearfix']/ul/li/text()").extract()[2].strip()
+        house['house_type'] = (response.xpath("//span[@class='main-info__title-main']/text()")
+            .extract()[0].split("en")[0])
+        house['house_id'] = get_number(response.xpath("//ul[@class='lang-selector--lang-options']/li/a/@href")
+                                       .extract()[0])
 
         # -*- house properties from raw text -*-
         properties = response.xpath("//*[@class='details-property_features']/ul/li/text()").extract()
@@ -162,11 +159,17 @@ def get_all_properties(house, properties):
 
         # *-* bath number *-*
         elif match_property(prop, ['baño']):
-            house['bath_num'] = get_number(prop)
+            try:
+                house['bath_num'] = get_number(prop)
+            except:
+                house['bath_num'] = prop
 
         # *-* construction date *-*
         elif match_property(prop, ['construido en']):
-            house['construct_date'] = get_number(prop)
+            try:
+                house['construct_date'] = get_number(prop)
+            except:
+                house['construct_date'] = prop
 
         # *-* storage room *-*
         elif match_property(prop, ['trastero']):
@@ -186,19 +189,24 @@ def get_all_properties(house, properties):
 
         # *-* room number *-*
         elif match_property(prop, ['habitaci']):
-            house['room_num'] = get_number(prop)
+            try:
+                house['room_num'] = get_number(prop)
+            except:
+                house['room_num'] = prop
 
         # *-* m2 of the house *-*
         elif match_property(prop, ['m²']):
-            house['m2_real'] = get_number(prop.split(',')[0])
-
             try:
-                house['m2_useful'] = get_number(prop.split(',')[1])
+                house['m2_real'] = get_number(prop.split(',')[0])
+                try:
+                    house['m2_useful'] = get_number(prop.split(',')[1])
+                except:
+                    pass
             except:
-                pass
+                house['m2_real'] = prop
 
         # *-* condition of the house *-*
-        elif match_property(prop, ['segunda mano']):
+        elif match_property(prop, ['segunda mano','promoción de obra nueva','']):
             house['condition'] = prop
 
         # *-* built in wardrobe *-*
@@ -221,9 +229,9 @@ def get_all_properties(house, properties):
         elif match_property(prop, ['garaje']):
             house['garage'] = prop
 
-        # *-* house type *-*
+        # *-* house type 2 *-*
         elif match_property(prop, ['chalet', 'finca', 'casa']):
-            house['house_type'] = prop
+            house['house_type2'] = prop
 
         # *-* heating *-*
         elif match_property(prop, ['calefacción']):
@@ -235,7 +243,10 @@ def get_all_properties(house, properties):
 
         # *-* ground_size *-*
         elif match_property(prop, ['parcela']):
-            house['ground_size'] = get_number(prop)
+            try:
+                house['ground_size'] = get_number(prop)
+            except:
+                house['ground_size'] = prop
 
         # *-* air_conditioner *-*
         elif match_property(prop, ['aire acondicionado']):
