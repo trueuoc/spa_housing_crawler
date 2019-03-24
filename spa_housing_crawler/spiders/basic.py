@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import scrapy
-import re
+import re, csv
 from datetime import datetime as dt
 
 # -*-   import modules -*-
@@ -45,14 +45,15 @@ class BasicSpider(scrapy.Spider):
 
         else:
             # -*- Print Zones -*-
-            print_zones = False  # --> True for printing all the zones
+            print_zones = False  # --> True for printing all the zones with index
             if print_zones:
                 print("----  ZONES -----")
-                for zone in zones_links:
-                    print(f"Zone: {zone}")
+                for index in range(len(zones_links)):
+                    print(f"{index}.zone: {zones_links[index]}")
                 print("-----------------------")
 
             # [17] -> for testing, take only Ceuta
+            # [52] -> take Bizkaia
             yield response.follow(zones_links[17], headers=header_UA, callback=self.parse_houses)
 
 
@@ -68,7 +69,7 @@ class BasicSpider(scrapy.Spider):
 
         # -*- Visit all the pages -*-
         test_onePage = True  # ---> True for visiting only one page (testing)
-        if (test_onePage):
+        if test_onePage:
             next_page_url = None
         else:
             next_page_url = response.xpath("//a[@class='icon-arrow-right-after']/@href").extract()
@@ -81,6 +82,7 @@ class BasicSpider(scrapy.Spider):
             print(f"----> {len(houses_links)} houses links catched, show just {num_houses}")
             for i in range(num_houses):
                 yield response.follow(houses_links[i], headers=header_UA, callback=self.parse_features)  # catch houses
+
         else:
             yield response.follow(next_page_url[0], headers=header_UA, callback=self.parse_houses)    # catch next page
 
@@ -260,9 +262,13 @@ def get_all_properties(house, properties):
                 house['kitchen'] = 1
 
         else:
-            print("--  --  --  --  --  ")
-            print(f"property not included yet: {prop}")
-            print("--  --  --  --  --  ")
+            # -*- Register undefined properties not included yet -*-
+            register_undefined = True  # ---> True for register undefined properties (testing)
+            if register_undefined:
+                with open('undefined_props.csv', 'a') as csvFile:
+                    writer = csv.writer(csvFile)
+                    writer.writerow([prop])
+                csvFile.close()
 
     return house
 
