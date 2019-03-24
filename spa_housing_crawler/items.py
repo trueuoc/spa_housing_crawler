@@ -39,6 +39,7 @@ class House(scrapy.Item):
     heating = scrapy.Field()
     ground_size = scrapy.Field()
     kitchen = scrapy.Field()
+    garage = scrapy.Field()
     unfurnished = scrapy.Field()
 
     # Extra House Equipment ------>  (Yes = 1 , No = 0)
@@ -47,7 +48,6 @@ class House(scrapy.Item):
     terrace = scrapy.Field()
     balcony = scrapy.Field()
     garden = scrapy.Field()
-    garage = scrapy.Field()
     chimney = scrapy.Field()
     air_conditioner = scrapy.Field()
     reduced_mobility = scrapy.Field()

@@ -75,7 +75,7 @@ class BasicSpider(scrapy.Spider):
             next_page_url = response.xpath("//a[@class='icon-arrow-right-after']/@href").extract()
 
         # -*- Visit all the houses -*-
-        num_houses = 10          # ---> number of houses to catch ; for all -> len(houses_links)
+        num_houses = len(houses_links)          # ---> number of houses to catch ; for all -> len(houses_links)
         num_houses = len(houses_links) if num_houses > len(houses_links) else num_houses
 
         if not next_page_url:
@@ -100,7 +100,6 @@ class BasicSpider(scrapy.Spider):
             terrace = 0,
             balcony = 0,
             garden = 0,
-            garage = 0,
             chimney = 0,
             air_conditioner = 0,
             reduced_mobility = 0,
@@ -182,7 +181,7 @@ def get_all_properties(house, properties):
             house['energetic_certif'] = prop.split(':')[1].strip()
 
         # *-* flat floor *-*
-        elif match_property(prop, ['bajo','planta']):
+        elif match_property(prop, ['bajo','planta','interior','exterior']):
             house['floor'] = prop
 
         # *-* room number *-*
@@ -220,7 +219,7 @@ def get_all_properties(house, properties):
 
         # *-* garage *-*
         elif match_property(prop, ['garaje']):
-            house['garage'] = 1
+            house['garage'] = prop
 
         # *-* house type *-*
         elif match_property(prop, ['chalet', 'finca', 'casa']):
