@@ -9,6 +9,13 @@ import scrapy
 
 class House(scrapy.Item):
 
+    # Metadata
+    ad_last_update = scrapy.Field()
+    obtention_date = scrapy.Field()
+
+    # ID
+    house_id = scrapy.Field()
+
     # Location Features
     loc_street = scrapy.Field()
     loc_city = scrapy.Field()
@@ -31,6 +38,8 @@ class House(scrapy.Item):
     house_type = scrapy.Field()
     heating = scrapy.Field()
     ground_size = scrapy.Field()
+    kitchen = scrapy.Field()
+    unfurnished = scrapy.Field()
 
     # Extra House Equipment ------>  (Yes = 1 , No = 0)
     storage_room = scrapy.Field()       # trastero
@@ -43,3 +52,6 @@ class House(scrapy.Item):
     air_conditioner = scrapy.Field()
     reduced_mobility = scrapy.Field()
     swimming_pool = scrapy.Field()
+
+    # Ad Description
+    ad_description = scrapy.Field()

@@ -1,45 +1,60 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
 import scrapy
-from spa_housing_crawler.items import House
 import re
+from datetime import datetime as dt
 
-
-# -*-   import USER AGENT from settings.py -*-
+# -*-   import modules -*-
 import sys, os
 sys.path.append(os.getcwd()+'/spa_housing_crawler')
+from spa_housing_crawler.items import House
 from settings import USER_AGENT
+
+# -*-   needed for parsing spanish dates -*-
+import locale
+locale.setlocale(locale.LC_ALL, 'es_ES')
+
+# Global declarations
 header_UA = {'User-Agent': USER_AGENT}
-
-
 houses_links = []
+zones_links = []
+renting_flag = True
+
 
 class BasicSpider(scrapy.Spider):
     name = 'basic'
-    allowed_domains = ['idealista.com',
-                       'www.idealista.com/inmueble/']
-
-    start_urls = ['https://www.idealista.com/venta-viviendas/#municipality-search/']        # --> house selling
-    # start_urls = ['https://www.idealista.com/alquiler-viviendas/#municipality-search/']   # --> house renting
+    allowed_domains = ['idealista.com', 'www.idealista.com/inmueble/']
+    start_urls = ['https://www.idealista.com']
 
     # ----------------------------------------------------------- #
     # ----------------------------------------------------------- #
 
     def parse(self, response):
         default_url = 'https://www.idealista.com'
+        renting_url = 'https://www.idealista.com/alquiler-viviendas/#municipality-search'
 
+        # -*- Get zone links -*-
         zone_paths = response.xpath("//div[@class='locations-list clearfix']/ul/li/a/@href").extract()
-        zones_links = default_url + zone_paths[17][:-10]  # [17] -> for testing, take only Ceuta
-                                                          # [:-10] -> remove "municipios" from path
-        # -*- Print Zones -*-
-        print_zones = False    # --> True for printing zones (testing)
-        if print_zones:
-            print("----  ZONES -----")
-            for zone in zone_paths:
-                print(f"Zone: {zone}")
-            print("-----------------------")
+        for i in range(len(zone_paths)):
+            zone_paths[i] = (default_url + zone_paths[i])[:-10]     # [:-10] -> removes 'municipios' from path
+        zones_links.extend(zone_paths)
 
-        yield response.follow(zones_links, headers= header_UA, callback=self.parse_houses)
+        global renting_flag
+        if renting_flag:
+            renting_flag = False
+            yield response.follow(renting_url, headers=header_UA, callback=self.parse)
+
+        else:
+            # -*- Print Zones -*-
+            print_zones = False  # --> True for printing all the zones
+            if print_zones:
+                print("----  ZONES -----")
+                for zone in zones_links:
+                    print(f"Zone: {zone}")
+                print("-----------------------")
+
+            # [17] -> for testing, take only Ceuta
+            yield response.follow(zones_links[17], headers=header_UA, callback=self.parse_houses)
+
 
     # ----------------------------------------------------------- #
     # ----------------------------------------------------------- #
@@ -59,7 +74,7 @@ class BasicSpider(scrapy.Spider):
             next_page_url = response.xpath("//a[@class='icon-arrow-right-after']/@href").extract()
 
         # -*- Visit all the houses -*-
-        num_houses = 30          # ---> number of houses to catch ; for all -> len(houses_links)
+        num_houses = 10          # ---> number of houses to catch ; for all -> len(houses_links)
         num_houses = len(houses_links) if num_houses > len(houses_links) else num_houses
 
         if not next_page_url:
@@ -75,6 +90,7 @@ class BasicSpider(scrapy.Spider):
     def parse_features(self, response):
         default_url = 'http://idealista.com/inmuebles'
 
+        print(id)
         # Set to zero Extra House Equipments
         house = House(
             storage_room = 0,
@@ -89,12 +105,33 @@ class BasicSpider(scrapy.Spider):
             swimming_pool = 0,
         )
 
-        house['price'] = int(response.xpath("//span[@class='txt-bold']/text()").extract()[0].replace(".", ""))
+        # -*- ad description -*-
+        try:
+            house['ad_description'] = response.xpath("//div[@class='adCommentsLanguage expandable']/text()").extract()
+            house['ad_description'][0] = house['ad_description'][0].replace('"','').strip()
+            house['ad_description'][-1] = house['ad_description'][-1].replace('"', '').strip()
+        except:
+            pass
+
+        # -*- ad last update -*-
+        ad_last_update = (response.xpath("//div[@class='ide-box-detail overlay-box mb-jumbo']/p/text()")
+            .extract()[0][23:])
+        house['ad_last_update'] = dt.strptime(ad_last_update, '%d de %B').date()
+
+        if dt.now().month < house['ad_last_update'].month:
+            house['ad_last_update'] = house['ad_last_update'].replace(year = dt.now().year-1)
+        else:
+            house['ad_last_update'] = house['ad_last_update'].replace(year=dt.now().year)
+
+        # -*- some features -*-
+        house['obtention_date'] = dt.now().date()
+        house['house_id'] = get_number(response.xpath("//ul[@class='lang-selector--lang-options']/li/a/@href").extract()[0])
         house['loc_street'] = response.xpath("//div[@class='clearfix']/ul/li/text()").extract()[0].strip()
         house['loc_city'] = response.xpath("//div[@class='clearfix']/ul/li/text()").extract()[1].strip()
         house['loc_zone'] = response.xpath("//div[@class='clearfix']/ul/li/text()").extract()[2].strip()
-        properties = response.xpath("//*[@class='details-property_features']/ul/li/text()").extract()
 
+        # -*- house properties from raw text -*-
+        properties = response.xpath("//*[@class='details-property_features']/ul/li/text()").extract()
         house = get_all_properties(house, properties)
 
         # -*- Print Extracted properties (Raw Text) -*-
@@ -107,12 +144,7 @@ class BasicSpider(scrapy.Spider):
                 print(f"{i}. feature: {prop}")
             print("-----------------------")
 
-        # -*- Print Extracted features (Items) -*-
-        print_features = False       # --> True for printing extracted features (testing)
-        if print_features:
-            print("----  ITEM FEATURES -----")
-            print(house.values())
-            print("-----------------------")
+        yield house
 
     # ----------------------------------------------------------- #
 
@@ -215,6 +247,17 @@ def get_all_properties(house, properties):
         # *-* swimming_pool *-*
         elif match_property(prop, ['piscina']):
             house['swimming_pool'] = 1
+
+        # *-* kitchen & unfurnished *-*
+        elif match_property(prop, ['cocina']):
+            house['kitchen'] = 1
+            if match_property(prop, ['sin amueblar']):
+                house['unfurnished'] = 1
+
+        elif match_property(prop, ['sin amueblar']):
+            house['unfurnished'] = 1
+            if match_property(prop, ['cocina']):
+                house['kitchen'] = 1
 
         else:
             print("--  --  --  --  --  ")
