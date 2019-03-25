@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
 import scrapy
-import re, csv
+import re
+import csv
 from datetime import datetime as dt
 import time
-
-# -*-   import modules -*-
-import sys, os
-sys.path.append(os.getcwd()+'/spa_housing_crawler')
+import sys
+import os
 from spa_housing_crawler.items import House
-from settings import USER_AGENT
+from spa_housing_crawler.settings import USER_AGENT
+import locale
+
+sys.path.append(os.getcwd()+'/spa_housing_crawler')
 
 # -*-   needed for parsing spanish dates -*-
-import locale
+
 locale.setlocale(locale.LC_ALL, 'es_ES')
 
 # Global declarations
@@ -57,7 +59,6 @@ class BasicSpider(scrapy.Spider):
             # [52] -> Bizkaia
             yield response.follow(zones_links[52], headers=header_UA, callback=self.parse_houses)
 
-
     # ----------------------------------------------------------- #
     # ----------------------------------------------------------- #
 
@@ -69,8 +70,8 @@ class BasicSpider(scrapy.Spider):
                                          .extract().pop())) for link in info_flats_xpath])
 
         # -*- Visit all the pages -*-
-        test_onePage = False  # ---> True for visiting only one page (testing)
-        if test_onePage:
+        test_one_page = False  # ---> True for visiting only one page (testing)
+        if test_one_page:
             next_page_url = None
         else:
             next_page_url = response.xpath("//a[@class='icon-arrow-right-after']/@href").extract()
@@ -91,28 +92,26 @@ class BasicSpider(scrapy.Spider):
     # ----------------------------------------------------------- #
 
     def parse_features(self, response):
-        default_url = 'http://idealista.com/inmuebles'
-
         # Set to zero Extra House Equipments
         house = House(
-            storage_room = 0,
-            built_in_wardrobe = 0,
-            terrace = 0,
-            balcony = 0,
-            garden = 0,
-            chimney = 0,
-            air_conditioner = 0,
-            reduced_mobility = 0,
-            swimming_pool = 0,
+            storage_room=0,
+            built_in_wardrobe=0,
+            terrace=0,
+            balcony=0,
+            garden=0,
+            chimney=0,
+            air_conditioner=0,
+            reduced_mobility=0,
+            swimming_pool=0,
         )
 
         # -*- ad description -*-
         try:
             house['ad_description'] = response.xpath("//div[@class='adCommentsLanguage expandable']/text()").extract()
-            house['ad_description'][0] = house['ad_description'][0].replace('"','').strip()
+            house['ad_description'][0] = house['ad_description'][0].replace('"', '').strip()
             house['ad_description'][-1] = house['ad_description'][-1].replace('"', '').strip()
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
         # -*- metadata -*-
         house['ad_last_update'] = (response.xpath("//div[@class='ide-box-detail overlay-box mb-jumbo']/p/text()")
@@ -131,21 +130,21 @@ class BasicSpider(scrapy.Spider):
                         house['loc_neigh'] = house['loc_full'][-4].strip()
                         try:
                             house['loc_street'] = house['loc_full'][-5].strip()
-                        except:
-                            pass
-                    except:
-                        pass
-                except:
-                    pass
-            except:
-                pass
-        except:
-            pass
+                        except Exception as e:
+                            print(e)
+                    except Exception as e:
+                        print(e)
+                except Exception as e:
+                    print(e)
+            except Exception as e:
+                print(e)
+        except Exception as e:
+            print(e)
 
         # -*- some features -*-
         house['price'] = int(response.xpath("//span[@class='txt-bold']/text()").extract()[0].replace(".", ""))
-        house['house_type'] = (response.xpath("//span[@class='main-info__title-main']/text()")
-            .extract()[0].split(" en ")[0])
+        house['house_type'] = (response.xpath("//span[@class='main-info__title-main']"
+                                              "/text()").extract()[0].split(" en ")[0])
         house['house_id'] = get_number(response.xpath("//ul[@class='lang-selector--lang-options']/li/a/@href")
                                        .extract()[0])
 
@@ -166,9 +165,8 @@ class BasicSpider(scrapy.Spider):
         yield house
 
     # ----------------------------------------------------------- #
+    # ---- *   FUNCTIONS TO EXTRACT FEATURES FROM PROPERTIES  * ----
 
-
-## ---- *   FUNCTIONS TO EXTRACT FEATURES FROM PROPERTIES  * ----
 
 def get_all_properties(house, properties):
     for prop in properties:
@@ -182,14 +180,16 @@ def get_all_properties(house, properties):
         elif match_property(prop, ['baño']):
             try:
                 house['bath_num'] = get_number(prop)
-            except:
+            except Exception as e:
+                print(e)
                 house['bath_num'] = prop
 
         # *-* construction date *-*
         elif match_property(prop, ['construido en']):
             try:
                 house['construct_date'] = get_number(prop)
-            except:
+            except Exception as e:
+                print(e)
                 house['construct_date'] = prop
 
         # *-* storage room *-*
@@ -198,14 +198,14 @@ def get_all_properties(house, properties):
 
         # *-* orientation of the house *-*
         elif match_property(prop, ['orientación']):
-            house['orientation'] = prop.split(' ',maxsplit=1)[1].strip()
+            house['orientation'] = prop.split(' ', maxsplit=1)[1].strip()
 
         # *-* energetic certification of the house *-*
         elif match_property(prop, ['certific']):
             house['energetic_certif'] = prop.split(':')[1].strip()
 
         # *-* flat floor *-*
-        elif match_property(prop, ['bajo','planta','interior','exterior']):
+        elif match_property(prop, ['bajo', 'planta', 'interior', 'exterior']):
             house['floor'] = prop
 
         # *-* room number *-*
@@ -221,9 +221,11 @@ def get_all_properties(house, properties):
                 house['m2_real'] = get_number(prop.split(',')[0])
                 try:
                     house['m2_useful'] = get_number(prop.split(',')[1])
-                except:
+                except Exception as e:
+                    print(e)
                     pass
-            except:
+            except Exception as e:
+                print(e)
                 house['m2_real'] = prop
 
         # *-* condition of the house *-*
@@ -288,7 +290,7 @@ def get_all_properties(house, properties):
             if match_property(prop, ['cocina']):
                 house['kitchen'] = 1
 
-        # *-* house type redundace *-*
+        # *-* house type redundancy *-*
         elif match_property(prop, ['chalet', 'finca', 'casa', 'caserón', 'palacio']):
             pass
 
@@ -309,21 +311,22 @@ def get_all_properties(house, properties):
 def match_property(property, patterns):
     for pat in patterns:
         match_prop = re.search(pat, property)
-        if match_prop != None:
+        if match_prop is not None:
             return True
     return False
+
 
 def check_property(property, patterns):
     for pat in patterns:
         check = re.search(pat, property)
-        if(check):
+        if check:
             return 1
     return 0
 
+
 def get_number(property):
     nums = re.findall(r'\d+', property)
-
-    if len(nums)==2:
-        return(int(nums[0]+nums[1]))            # '40.000' ->   '40' + '000'  -> '40000'  ->  40000
+    if len(nums) == 2:
+        return int(nums[0]+nums[1])           # '40.000' ->   '40' + '000'  -> '40000'  ->  40000
     else:
         return int(nums[0])
