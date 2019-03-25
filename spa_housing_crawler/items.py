@@ -17,11 +17,13 @@ class House(scrapy.Item):
     house_id = scrapy.Field()
 
     # Location Features
-    loc_street = scrapy.Field()
-    loc_city = scrapy.Field()
     loc_zone = scrapy.Field()
+    loc_city = scrapy.Field()
+    loc_district = scrapy.Field()
+    loc_neigh = scrapy.Field()
+    loc_street = scrapy.Field()
+    loc_full = scrapy.Field()
 
-    # Price
     price = scrapy.Field()
 
     # House Properties
@@ -36,7 +38,6 @@ class House(scrapy.Item):
     m2_useful = scrapy.Field()
     condition = scrapy.Field()          # Second Hand / Well Conserved ...
     house_type = scrapy.Field()
-    house_type2 = scrapy.Field()
     heating = scrapy.Field()
     ground_size = scrapy.Field()
     kitchen = scrapy.Field()

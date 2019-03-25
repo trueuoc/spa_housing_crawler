@@ -119,12 +119,33 @@ class BasicSpider(scrapy.Spider):
             .extract()[0])
         house['obtention_date'] = dt.now().date()
 
+        # -*- location -*-
+        house['loc_full'] = response.xpath("//div[@class='clearfix']/ul/li/text()").extract()
+        try:
+            house['loc_zone'] = house['loc_full'][-1].strip()
+            try:
+                house['loc_city'] = house['loc_full'][-2].strip()
+                try:
+                    house['loc_district'] = house['loc_full'][-3].strip()
+                    try:
+                        house['loc_neigh'] = house['loc_full'][-4].strip()
+                        try:
+                            house['loc_street'] = house['loc_full'][-5].strip()
+                        except:
+                            pass
+                    except:
+                        pass
+                except:
+                    pass
+            except:
+                pass
+        except:
+            pass
+
         # -*- some features -*-
-        house['loc_street'] = response.xpath("//div[@class='clearfix']/ul/li/text()").extract()[0].strip()
-        house['loc_city'] = response.xpath("//div[@class='clearfix']/ul/li/text()").extract()[1].strip()
-        house['loc_zone'] = response.xpath("//div[@class='clearfix']/ul/li/text()").extract()[2].strip()
+        house['price'] = int(response.xpath("//span[@class='txt-bold']/text()").extract()[0].replace(".", ""))
         house['house_type'] = (response.xpath("//span[@class='main-info__title-main']/text()")
-            .extract()[0].split("en")[0])
+            .extract()[0].split(" en ")[0])
         house['house_id'] = get_number(response.xpath("//ul[@class='lang-selector--lang-options']/li/a/@href")
                                        .extract()[0])
 
@@ -206,7 +227,7 @@ def get_all_properties(house, properties):
                 house['m2_real'] = prop
 
         # *-* condition of the house *-*
-        elif match_property(prop, ['segunda mano','promoción de obra nueva','']):
+        elif match_property(prop, ['segunda mano','promoción de obra nueva']):
             house['condition'] = prop
 
         # *-* built in wardrobe *-*
@@ -229,17 +250,13 @@ def get_all_properties(house, properties):
         elif match_property(prop, ['garaje']):
             house['garage'] = prop
 
-        # *-* house type 2 *-*
-        elif match_property(prop, ['chalet', 'finca', 'casa']):
-            house['house_type2'] = prop
-
         # *-* heating *-*
         elif match_property(prop, ['calefacción']):
             house['heating'] = prop
 
         # *-* chimney *-*
         elif match_property(prop, ['chimenea']):
-            house['chimney'] = prop
+            house['chimney'] = 1
 
         # *-* ground_size *-*
         elif match_property(prop, ['parcela']):
@@ -270,6 +287,10 @@ def get_all_properties(house, properties):
             house['unfurnished'] = 1
             if match_property(prop, ['cocina']):
                 house['kitchen'] = 1
+
+        # *-* house type redundace *-*
+        elif match_property(prop, ['chalet', 'finca', 'casa', 'caserón', 'palacio']):
+            pass
 
         else:
             # -*- Register undefined properties not included yet -*-
