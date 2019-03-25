@@ -20,6 +20,7 @@ locale.setlocale(locale.LC_ALL, 'es_ES')
 header_UA = {'User-Agent': USER_AGENT}
 houses_links = []
 zones_links = []
+subzones_links = []
 renting_flag = True
 
 
@@ -39,6 +40,7 @@ class BasicSpider(scrapy.Spider):
         zone_paths = response.xpath("//div[@class='locations-list clearfix']/ul/li/a/@href").extract()
         for i in range(len(zone_paths)):
             zone_paths[i] = (default_url + zone_paths[i])[:-10]     # [:-10] -> removes 'municipios' from path
+            zone_paths[i] = zone_paths[i] + 'mapa'
         zones_links.extend(zone_paths)
 
         global renting_flag
@@ -57,7 +59,32 @@ class BasicSpider(scrapy.Spider):
 
             # [17] -> for testing, take only Ceuta:  zones_links[52]
             # [52] -> Bizkaia
-            yield response.follow(zones_links[52], headers=header_UA, callback=self.parse_houses)
+            yield response.follow(zones_links[52], headers=header_UA, callback=self.parse_zones)
+
+    # ----------------------------------------------------------- #
+    # ----------------------------------------------------------- #
+
+    def parse_zones(self, response):
+        default_url = 'http://idealista.com'
+
+        # -*- Get subzone links -*-
+        subzone_paths = response.xpath("//map[@id='map-mapping']/area/@href").extract()
+
+        # --> removes subzones out of the actual province & creates links
+        to_drop = []
+        province = subzone_paths[0].split("/")[2]
+
+        for i in range(len(subzone_paths)):
+            subzone_paths[i] = default_url + subzone_paths[i]
+            if subzone_paths[i].split("/")[4] != province:
+                to_drop.extend([subzone_paths[i]])
+
+        [subzone_paths.remove(i) for i in to_drop]
+        subzones_links.extend(subzone_paths)
+
+        print(subzones_links)
+
+        #yeld response.follow(subzones_links, headers=header_UA, callback=self.parse_subzones)
 
     # ----------------------------------------------------------- #
     # ----------------------------------------------------------- #
