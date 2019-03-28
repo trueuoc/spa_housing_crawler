@@ -7,6 +7,22 @@
 
 import scrapy
 
+class Zone(scrapy.Item):
+
+    zone = scrapy.Field()
+    type = scrapy.Field()
+
+    # ---------------------------
+
+class Link(scrapy.Item):
+
+    link = scrapy.Field()
+    num_link = scrapy.Field()
+    province = scrapy.Field()
+    obtention_date = scrapy.Field()
+
+    # ---------------------------
+
 class House(scrapy.Item):
 
     # Metadata

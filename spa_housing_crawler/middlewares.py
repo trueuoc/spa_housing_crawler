@@ -5,8 +5,15 @@
 # See documentation in:
 # https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
+from scrapy.downloadermiddlewares.retry import RetryMiddleware
+from scrapy.utils.response import response_status_message
+from time import sleep
 from scrapy import signals
+import sys
+import os
+import re
 
+sys.path.append(os.getcwd()+'/spa_housing_crawler')
 
 class SpaHousingCrawlerSpiderMiddleware(object):
     # Not all methods need to be defined. If a method is not defined,
@@ -101,3 +108,31 @@ class SpaHousingCrawlerDownloaderMiddleware(object):
 
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
+
+
+class SleepRetryMiddleware(RetryMiddleware):
+    def __init__(self, settings):
+        RetryMiddleware.__init__(self, settings)
+
+    def process_response(self, request, response, spider):
+        if response.status in [403]:
+            link = str(request)[5:-1]+'\n'
+
+            # -*- Register log of denied houses -*-
+            check_house = re.search('inmueble', link)
+            if check_house:
+                with open('logHouse.txt', 'a') as log:
+                    log.write(link)
+
+            # -*- Register log of denied links -*-
+            else:
+                with open('logLink.txt', 'a') as log:
+                    log.write(link)
+
+            # -*- Wait for a while before restarting crawling -*-
+            reason = response_status_message(response.status)
+            print("********   REQUEST BLOCKED!  :(   Waiting 45 seconds before reload")
+            sleep(45)
+            return self._retry(request, reason, spider) or response
+
+        return super(SleepRetryMiddleware, self).process_response(request, response, spider)
