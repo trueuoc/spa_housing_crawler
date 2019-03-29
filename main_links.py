@@ -16,7 +16,7 @@ subprocess.run(command_zone, shell=True)
 all_zones = pd.read_csv('zones.csv')
 
 # -*- Get all the links -*-
-for zone in all_zones.iloc[10:11].itertuples():
+for zone in all_zones.iloc[:].itertuples():
     print("\n***********************")
     print(f"Extracting {zone.type} houses links from {zone.zone}")
     print("***********************\n\n")
