@@ -5,6 +5,16 @@ import os
 
 # -*- Get all the zones -*-
 try:
+    os.remove('addinfo.csv')
+except Exception as e:
+    print(e)
+
+command_zone = 'scrapy crawl getAditionalData -o addinfo.csv'
+subprocess.run(command_zone, shell=True)
+
+
+# -*- Get all the zones -*-
+try:
     os.remove('zones.csv')
 except Exception as e:
     print(e)

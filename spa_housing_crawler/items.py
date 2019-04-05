@@ -7,12 +7,14 @@
 
 import scrapy
 
+
 class Zone(scrapy.Item):
 
     zone = scrapy.Field()
     type = scrapy.Field()
 
     # ---------------------------
+
 
 class Link(scrapy.Item):
 
@@ -22,6 +24,7 @@ class Link(scrapy.Item):
     obtention_date = scrapy.Field()
 
     # ---------------------------
+
 
 class House(scrapy.Item):
 
@@ -73,3 +76,9 @@ class House(scrapy.Item):
 
     # Ad Description
     ad_description = scrapy.Field()
+
+
+class AditionalDataOjct(scrapy.Item):
+    poblacion = scrapy.Field()
+    valor = scrapy.Field()
+    source = scrapy.Field()
