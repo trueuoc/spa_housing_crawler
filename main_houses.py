@@ -11,7 +11,17 @@ if len(exclude) is 1:
 else:
     all_zones = pd.read_csv('links.csv', skiprows=exclude[1:])
 
-provinces = all_zones.province.unique()
+# Normalize province names:
+all_zones['province'] = (all_zones['province']
+                         .str.replace('á','a')
+                         .str.replace('é','e')
+                         .str.replace('í','i')
+                         .str.replace('ó','o')
+                         .str.replace('ú','u')
+                         .str.replace('ñ','n'))
+
+provinces = all_zones.province.sort_values().unique()
+
 
 # -*- Select provinces with GUI
 selected=[]
