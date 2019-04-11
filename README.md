@@ -26,7 +26,7 @@ So there are 3 main stages, with 3 different spiders:
 
 #### How to run the first stage?
 
-+ Run the script called `main_links.py` (*both zones & subozones links extraction are automatized in it*)
++ Run the script called `main_links.py` (*both zones & subzones links extraction are automatized in it*)
 
 <br />
 
@@ -48,16 +48,16 @@ This task is made by the spider **GetLinks**, and all the extracted links are sa
 ### Second stage: Extracting houses data
 
 #### How to run the second stage?
-Once `links.csv` is ready:
-+ run the script called `main_houses.py`.
+After creating `links.csv`:
++ run the script called `main_houses.py`
 + choose in the poped window the province where you want to extract houses data:
-<img src="./assets/provinces.png" alt="provinces" width="200"/>
+<img src="./assets/provinces.png" alt="provinces" width="350"/>
 
 <br />
 
 #### How it works?
 
-Once we have all the zones/subozones/neighborhoods links in `links.csv`, the next thing is extracting houses data.
+Once we have all the zones/subzones/neighborhoods links in `links.csv`, the next step is extracting houses data.
 But, as in the web page there are stored over one million and half houses, trying to extract all of them in one shot would be dramatic.
 So instead, you choose just the provinces you want to extract, and the crawler starts first getting the links of each house in this province, and then, parsing and extracting all the relevant data from each house page.
 
@@ -66,7 +66,7 @@ The crawler is developed for stopping and reloading after a while whenever gets 
 Additionaly, it saves all the denied houses-links and subzones-links in `logHouse.txt` and `logLink.txt`files respectively.
 Then, once it finishes extracting all the houses, the crawler retries getting this previously blocked houses data.
  
- 
+<br />
 ### Third stage: Dataset creation
 
 TODO!
