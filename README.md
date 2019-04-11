@@ -2,7 +2,7 @@
 
 Web Crawler for scraping Spanish housing data from **_idealista.com_**
 
-<img src="./assets/header.png" alt="header" width="350"/>
+<img src="./assets/header.png" alt="header" width="600"/>
 <br />
 
 ## Prepare environment
@@ -52,7 +52,7 @@ This task is made by the spider **GetLinks**, and all the extracted links are sa
 After creating `links.csv`:
 + run the script called `main_houses.py`
 + choose in the poped window the province where you want to extract houses data:
-<img src="./assets/provinces.png" alt="provinces" width="350"/>
+<img src="./assets/provinces.png" alt="provinces" width="300"/>
 
 <br />
 
