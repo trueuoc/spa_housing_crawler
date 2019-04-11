@@ -5,11 +5,11 @@ import tkinter as tk
 import os
 
 # -*- Load links dataframe -*-
-exclude = [i for i, line in enumerate(open('links.csv')) if line.startswith('link')]
+exclude = [i for i, line in enumerate(open('./additional_csv/links.csv')) if line.startswith('link')]
 if len(exclude) is 1:
-    all_zones = pd.read_csv('links.csv')
+    all_zones = pd.read_csv('./additional_csv/links.csv')
 else:
-    all_zones = pd.read_csv('links.csv', skiprows=exclude[1:])
+    all_zones = pd.read_csv('./additional_csv/links.csv', skiprows=exclude[1:])
 
 # Normalize province names:
 all_zones['province'] = (all_zones['province']

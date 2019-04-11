@@ -69,7 +69,7 @@ class HousesSpider(scrapy.Spider):
     # ----------------------------------------------------------- #
 
     ''' if a 403 response is received while browsing the pages in the link collection,
-            save all the houses stored in 'houses_links' after quiting '''
+            save all the houses stored in 'houses_links' list after quiting '''
 
     def parse_deny(self, response):
         with open('logHouse.txt', 'a') as log:

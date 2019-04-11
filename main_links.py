@@ -5,25 +5,25 @@ import os
 
 # -*- Get all the zones -*-
 try:
-    os.remove('addinfo.csv')
+    os.remove('./additional_csv/addinfo.csv')
 except Exception as e:
     print(e)
 
-command_zone = 'scrapy crawl getAditionalData -o addinfo.csv'
+command_zone = 'scrapy crawl getAditionalData -o ./additional_csv/addinfo.csv'
 subprocess.run(command_zone, shell=True)
 
 
 # -*- Get all the zones -*-
 try:
-    os.remove('zones.csv')
+    os.remove('./additional_csv/zones.csv')
 except Exception as e:
     print(e)
 
-command_zone = 'scrapy crawl getZones -o zones.csv'
+command_zone = 'scrapy crawl getZones -o ./additional_csv/zones.csv'
 subprocess.run(command_zone, shell=True)
 
 # -*- Load zone dataframe -*-
-all_zones = pd.read_csv('zones.csv')
+all_zones = pd.read_csv('./additional_csv/zones.csv')
 
 # -*- Get all the links -*-
 for zone in all_zones.iloc[:].itertuples():
@@ -32,7 +32,7 @@ for zone in all_zones.iloc[:].itertuples():
     print("***********************\n\n")
     time.sleep(3)
 
-    command_links = f'scrapy crawl getLinks -a start={zone.zone} -o links.csv'
+    command_links = f'scrapy crawl getLinks -a start={zone.zone} -o ./additional_csv/links.csv'
     subprocess.run(command_links, shell=True)
     print("********   PROVINCE LINK EXTRACTION FINISHED!   Waiting 45 seconds before starting with new province")
     time.sleep(45)
@@ -56,7 +56,7 @@ while denied_flag:
         time.sleep(3)
 
         for link in denied_links:
-            command_denied = f'scrapy crawl getLinks -a start={link} -o links.csv'
+            command_denied = f'scrapy crawl getLinks -a start={link} -o ./additional_csv/links.csv'
             subprocess.run(command_denied, shell=True)
 
         # -*- Check if still are denied links -*-

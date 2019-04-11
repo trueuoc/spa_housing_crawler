@@ -23,16 +23,16 @@ class GetLinks(scrapy.Spider):
     def __init__(self, start):
         self.start_urls = [start]
 
-        all_zones = pd.read_csv('zones.csv')
+        all_zones = pd.read_csv('./additional_csv/zones.csv')
         zones.extend(all_zones['zone'])
 
         try:
             # -*- Load links dataframe -*-
-            exclude = [i for i, line in enumerate(open('links.csv')) if line.startswith('link')]
+            exclude = [i for i, line in enumerate(open('./additional_csv/links.csv')) if line.startswith('link')]
             if len(exclude) is 1:
-                all_links = pd.read_csv('links.csv')
+                all_links = pd.read_csv('./additional_csv/links.csv')
             else:
-                all_links = pd.read_csv('links.csv', skiprows=exclude[1:])
+                all_links = pd.read_csv('./additional_csv/links.csv', skiprows=exclude[1:])
 
             saved.extend(all_links['link'])
 
