@@ -58,7 +58,7 @@ for province in selected:
         print("***********************\n\n")
         time.sleep(3)
 
-        command = f'scrapy crawl houses -a start_url={zone.link} -o houses_{province.replace(" ", "_")}.csv'
+        command = f'scrapy crawl houses -a start_url={zone.link} -o ./province_houses/houses_{province.replace(" ", "_")}.csv'
         subprocess.run(command, shell=True)
         print("********   ZONE HOUSE EXTRACTION FINISHED!   Waiting 20 seconds before reload")
         time.sleep(20)
@@ -83,7 +83,7 @@ while deny_link_flag:
         time.sleep(180)
 
         for link in denied_links:
-            command_denied_link = f'scrapy crawl houses -a start_url={link} -o houses_{province.replace(" ","_")}.csv'
+            command_denied_link = f'scrapy crawl houses -a start_url={link} -o ./province_houses/houses_{province.replace(" ","_")}.csv'
             subprocess.run(command_denied_link, shell=True)
 
         # -*- Check if still are denied houses -*-
@@ -108,7 +108,7 @@ while deny_house_flag:
     print("********   Waiting 3 minutes before starting")
     time.sleep(180)
     denied_link = 'https://www.idealista.com/login'  # start-url-code to extract denied links
-    command_denied_house = f'scrapy crawl houses -a start_url={denied_link} -o houses_{province.replace(" ","_")}.csv'
+    command_denied_house = f'scrapy crawl houses -a start_url={denied_link} -o ./province_houses/houses_{province.replace(" ","_")}.csv'
     subprocess.run(command_denied_house, shell=True)
 
     # -*- Check if still are denied houses -*-
