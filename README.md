@@ -2,6 +2,7 @@
 
 Web Crawler for scraping Spanish housing data from **_idealista.com_**
 
+<img src="./assets/header.png" alt="header" width="350"/>
 <br />
 
 ## Prepare environment
