@@ -3,7 +3,7 @@ import pandas as pd
 import time
 import os
 
-# -*- Get all the zones -*-
+# -*- Get additional info -*-
 try:
     os.remove('./additional_csv/addinfo.csv')
 except Exception as e:
