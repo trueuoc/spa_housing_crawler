@@ -82,3 +82,16 @@ class AditionalDataOjct(scrapy.Item):
     poblacion = scrapy.Field()
     valor = scrapy.Field()
     source = scrapy.Field()
+
+
+class Renta(scrapy.Item):
+    poblacion = scrapy.Field()
+    n_declaraciones = scrapy.Field()
+    renta_bruta_media = scrapy.Field()
+    renta_disponible_media = scrapy.Field()
+    renta_de_trabajos = scrapy.Field()
+    rentas_exentas = scrapy.Field()
+    renta_bruta = scrapy.Field()
+    cotizaciones_ss = scrapy.Field()
+    cuota_rentable = scrapy.Field()
+    renta_disponible = scrapy.Field()
